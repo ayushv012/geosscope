@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoScope — Interactive Globe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/globe.gl@2.35.1"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">&#9673;</span>
+                <h1>GeoScope</h1>
+            </div>
+
+            <div class="header-controls">
+                <!-- Search -->
+                <div class="search-wrapper" id="searchWrapper">
+                    <span class="search-icon">&#8981;</span>
+                    <input type="text" class="search-input" id="searchInput"
+                           placeholder="Search country&hellip;"
+                           autocomplete="off" spellcheck="false">
+                    <kbd class="search-kbd" id="searchKbd">/</kbd>
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+
+                <!-- Quiz -->
+                <button class="header-btn" id="quizBtn" aria-label="Start quiz" title="Geography quiz (Q)">
+                    <span>&#9654;</span>
+                </button>
+
+                <!-- Achievements -->
+                <button class="header-btn" id="achieveBtn" aria-label="Achievements" title="Achievements (A)">
+                    <span>&#9733;</span>
+                    <span class="badge-dot" id="badgeDot" style="display:none;"></span>
+                </button>
+
+                <!-- Conflict Mode -->
+                <button class="header-btn" id="conflictToggle" aria-label="Toggle conflict zones" title="Toggle conflict zones (C)">
+                    <span id="conflictIcon">&#9888;</span>
+                </button>
+
+                <!-- Random Country -->
+                <button class="header-btn" id="randomBtn" aria-label="Random country" title="Random country (R)">
+                    <span>&#9861;</span>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button class="header-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle theme (T)">
+                    <span class="toggle-icon" id="toggleIcon">&#9789;</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main -->
+        <main class="main">
+            <div class="globe-container" id="globeContainer">
+                <!-- Loading -->
+                <div class="globe-loading" id="globeLoading">
+                    <div class="spinner"></div>
+                    <p>Loading globe data&hellip;</p>
+                </div>
+
+                <!-- HUD Overlay -->
+                <div class="hud" id="hud">
+                    <div class="hud-item">
+                        <span class="hud-label">LAT</span>
+                        <span class="hud-value" id="hudLat">0.00</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">LNG</span>
+                        <span class="hud-value" id="hudLng">0.00</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">ALT</span>
+                        <span class="hud-value" id="hudAlt">2.20</span>
+                    </div>
+                </div>
+
+                <!-- Visit Counter -->
+                <div class="visit-counter" id="visitCounter">
+                    <span class="vc-label">EXPLORED</span>
+                    <span class="vc-value"><span id="visitCount">0</span> / <span id="visitTotal">0</span></span>
+                </div>
+
+                <!-- Conflict Legend -->
+                <div class="conflict-legend" id="conflictLegend" style="display: none;">
+                    <span class="legend-title">&#9888; CONFLICT ZONES</span>
+                    <div class="legend-items">
+                        <div class="legend-item"><span class="legend-dot high"></span> High</div>
+                        <div class="legend-item"><span class="legend-dot medium"></span> Medium</div>
+                        <div class="legend-item"><span class="legend-dot low"></span> Low</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <aside class="info-panel" id="infoPanel">
+                <div class="info-default" id="infoDefault">
+                    <div class="info-icon">&#127758;</div>
+                    <h2>Explore the World</h2>
+                    <p class="info-subtitle">Hover over any country to discover facts. Click to lock.</p>
+                    <div class="shortcuts-hint">
+                        <div class="shortcut"><kbd>/</kbd> Search</div>
+                        <div class="shortcut"><kbd>Q</kbd> Quiz</div>
+                        <div class="shortcut"><kbd>A</kbd> Achievements</div>
+                        <div class="shortcut"><kbd>R</kbd> Random</div>
+                        <div class="shortcut"><kbd>C</kbd> Conflicts</div>
+                        <div class="shortcut"><kbd>T</kbd> Theme</div>
+                    </div>
+                </div>
+
+                <div class="info-content" id="infoContent" style="display: none;">
+                    <!-- Country Flag -->
+                    <div class="flag-wrapper" id="flagWrapper">
+                        <img class="flag-img" id="flagImg" alt="" src="">
+                        <div class="flag-placeholder" id="flagPlaceholder">&#9873;</div>
+                    </div>
+
+                    <div class="info-header-row">
+                        <div>
+                            <h2 class="country-name" id="countryName"></h2>
+                            <div class="country-continent" id="countryCont"></div>
+                        </div>
+                        <div class="info-btn-group">
+                            <button class="pin-btn compare-btn" id="compareBtn" title="Compare countries" style="display:none;">
+                                <span>&#8644;</span>
+                            </button>
+                            <button class="pin-btn" id="pinBtn" title="Click a country to pin it">
+                                <span id="pinIcon">&#9737;</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Population Bar -->
+                    <div class="pop-bar-wrapper" id="popBarWrapper">
+                        <div class="pop-bar-label">
+                            <span>Population</span>
+                            <span class="pop-bar-pct" id="popPct">0%</span>
+                        </div>
+                        <div class="pop-bar-track">
+                            <div class="pop-bar-fill" id="popBarFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Capital</span>
+                            <span class="info-value" id="countryCapital">&mdash;</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Population</span>
+                            <span class="info-value" id="countryPop">&mdash;</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Area</span>
+                            <span class="info-value" id="countryArea">&mdash;</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Languages</span>
+                            <span class="info-value" id="countryLang">&mdash;</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Currency</span>
+                            <span class="info-value" id="countryCurr">&mdash;</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">GDP</span>
+                            <span class="info-value" id="countryGDP">&mdash;</span>
+                        </div>
+                    </div>
+
+                    <div class="fun-fact">
+                        <span class="fact-label">Fun Fact</span>
+                        <p class="fact-text" id="countryFact">&mdash;</p>
+                    </div>
+
+                    <!-- Conflict Info -->
+                    <div class="conflict-info" id="conflictInfo" style="display: none;">
+                        <div class="conflict-header">
+                            <span class="conflict-icon">&#9888;</span>
+                            <span class="conflict-badge" id="conflictBadge">Active Conflict</span>
+                        </div>
+                        <div class="conflict-type" id="conflictType"></div>
+                        <p class="conflict-desc" id="conflictDesc"></p>
+                        <div class="conflict-meta">
+                            <div class="conflict-meta-item">
+                                <span class="conflict-meta-label">Parties</span>
+                                <span class="conflict-meta-value" id="conflictParties"></span>
+                            </div>
+                            <div class="conflict-meta-item">
+                                <span class="conflict-meta-label">Since</span>
+                                <span class="conflict-meta-value" id="conflictSince"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Compare Modal -->
+    <div class="modal-backdrop" id="compareBackdrop" style="display:none;">
+        <div class="compare-modal" id="compareModal">
+            <div class="cmp-header">
+                <h3>Compare Countries</h3>
+                <button class="cmp-close" id="cmpClose">&times;</button>
+            </div>
+            <div class="cmp-search-row">
+                <input type="text" class="cmp-search" id="cmpSearch" placeholder="Search second country&hellip;" autocomplete="off">
+                <div class="cmp-results" id="cmpResults"></div>
+            </div>
+            <div class="cmp-body" id="cmpBody" style="display:none;">
+                <div class="cmp-countries">
+                    <div class="cmp-col">
+                        <img class="cmp-flag" id="cmpFlagA" src="" alt="">
+                        <span class="cmp-name" id="cmpNameA"></span>
+                    </div>
+                    <span class="cmp-vs">VS</span>
+                    <div class="cmp-col">
+                        <img class="cmp-flag" id="cmpFlagB" src="" alt="">
+                        <span class="cmp-name" id="cmpNameB"></span>
+                    </div>
+                </div>
+                <div class="cmp-bars" id="cmpBars"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div class="modal-backdrop" id="achieveBackdrop" style="display:none;">
+        <div class="achieve-modal" id="achieveModal">
+            <div class="ach-header">
+                <h3>Achievements</h3>
+                <span class="ach-progress" id="achProgress">0 / 0</span>
+                <button class="cmp-close" id="achClose">&times;</button>
+            </div>
+            <div class="ach-grid" id="achGrid"></div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div class="modal-backdrop quiz-backdrop" id="quizOverlay" style="display:none;">
+        <div class="quiz-modal">
+            <!-- Start -->
+            <div class="quiz-screen" id="quizStart">
+                <div class="quiz-logo">&#9654;</div>
+                <h2 class="quiz-title">Geography Quiz</h2>
+                <p class="quiz-sub">Test your world knowledge</p>
+                <div class="quiz-modes" id="quizModes">
+                    <button class="qmode-btn active" data-mode="identify">&#127758; Identify Countries</button>
+                    <button class="qmode-btn" data-mode="capitals">&#127961; Name the Capital</button>
+                    <button class="qmode-btn" data-mode="continents">&#129517; Continent Quiz</button>
+                    <button class="qmode-btn" data-mode="population">&#128200; Population Pick</button>
+                    <button class="qmode-btn locked" data-mode="flags">&#127988; Flag Challenge <span class="pro-tag">PRO</span></button>
+                    <button class="qmode-btn locked" data-mode="speed">&#9889; Speed Run <span class="pro-tag">PRO</span></button>
+                </div>
+                <div class="quiz-pro-notice" id="quizProNotice" style="display:none;">
+                    &#128274; Pro version coming soon &mdash; stay tuned!
+                </div>
+                <button class="quiz-go" id="quizGo">Start Quiz</button>
+                <div class="quiz-best">High Score: <span id="quizBest">0</span></div>
+            </div>
+            <!-- Question -->
+            <div class="quiz-screen" id="quizPlay" style="display: none;">
+                <div class="quiz-hud">
+                    <span class="qh-item"><span class="qh-label">Q</span><span id="qNum">1/10</span></span>
+                    <span class="qh-item"><span class="qh-label">PTS</span><span id="qPts">0</span></span>
+                    <span class="qh-timer" id="qTimer">15</span>
+                </div>
+                <div class="quiz-streak" id="qStreak" style="opacity:0;">&#9889; <span id="qStreakN">0</span></div>
+                <div class="quiz-prompt" id="qPrompt">Which country is this?</div>
+                <div class="quiz-opts" id="qOpts"></div>
+            </div>
+            <!-- Results -->
+            <div class="quiz-screen" id="quizEnd" style="display: none;">
+                <div class="quiz-end-icon">&#9733;</div>
+                <div class="quiz-final" id="qFinal">0</div>
+                <div class="quiz-final-label">POINTS</div>
+                <div class="quiz-stats">
+                    <div class="qs-item"><span class="qs-val" id="qsCorrect">0</span><span class="qs-lbl">Correct</span></div>
+                    <div class="qs-item"><span class="qs-val" id="qsAcc">0%</span><span class="qs-lbl">Accuracy</span></div>
+                    <div class="qs-item"><span class="qs-val" id="qsStreak">0</span><span class="qs-lbl">Best Streak</span></div>
+                </div>
+                <div class="quiz-end-btns">
+                    <button class="quiz-go" id="quizRetry">Play Again</button>
+                    <button class="quiz-close" id="quizClose">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
